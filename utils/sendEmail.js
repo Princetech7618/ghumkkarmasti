@@ -1,5 +1,5 @@
 // utils/sendEmail.js
-import emailjs from 'emailjs-com'
+import emailjs from '@emailjs/browser'
 
 export const sendEmail = async (params) => {
   try {

@@ -100,8 +100,6 @@
 import { sendEmail } from '@/utils/sendEmail'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
-import emailjs from 'emailjs-com'
-// import ReCAPTCHA from 'react-google-recaptcha'
 // import { useRef } from 'react'
 
 export default function ContactForm() {

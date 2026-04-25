@@ -135,7 +135,6 @@
 
 
 'use client'
-import emailjs from 'emailjs-com'
 import { sendEmail } from '@/utils/sendEmail'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
