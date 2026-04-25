@@ -1,7 +1,7 @@
 // import Navbar from '@/components/Navbar'
 // import Footer from '@/components/Footer'
 "use client"; 
-
+ 
 
 export default function About() {
   return (
