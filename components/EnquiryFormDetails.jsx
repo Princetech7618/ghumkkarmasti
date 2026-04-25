@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { sendEmail } from '@/utils/sendEmail'
 
 export default function EnquiryForm({
   type = "package",
@@ -25,7 +26,7 @@ export default function EnquiryForm({
 
   const [errors, setErrors] = useState({})
 
-  // ✅ AUTO UPDATE when props change
+  // AUTO UPDATE
   useEffect(() => {
     setForm((prev) => ({
       ...prev,
@@ -57,10 +58,7 @@ export default function EnquiryForm({
       newErrors.phone = "Enter valid 10 digit number"
     }
 
-    if (!form.pickup.trim()) {
-      newErrors.pickup = "Pickup location required"
-    }
-
+    if (!form.pickup.trim()) newErrors.pickup = "Pickup location required"
     if (!form.date) newErrors.date = "Select date"
 
     if (type === "package") {
@@ -77,12 +75,11 @@ export default function EnquiryForm({
     return newErrors
   }
 
-  // SUBMIT
-  const handleSubmit = (e) => {
+  // ✅ FINAL SUBMIT (MERGED + EMAIL WORKING)
+  const handleSubmit = async (e) => {
     e.preventDefault()
 
     const validationErrors = validate()
-
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors)
       return
@@ -104,7 +101,8 @@ export default function EnquiryForm({
         packageType: form.packageType,
         message: form.message,
       }
-    } else if (type === "car" && showCarFields) {
+    } 
+    else if (type === "car" && showCarFields) {
       finalData = {
         name: form.name,
         email: form.email,
@@ -115,7 +113,8 @@ export default function EnquiryForm({
         duration: form.duration,
         message: form.message,
       }
-    } else {
+    } 
+    else {
       finalData = {
         name: form.name,
         email: form.email,
@@ -126,24 +125,37 @@ export default function EnquiryForm({
       }
     }
 
-    console.log("Submitted Data:", finalData)
+    try {
+      const params = {
+        ...finalData,
+        form_type: type === 'car' ? 'Car Enquiry' : 'Package Enquiry',
+        ...(finalData.message && { message: finalData.message }) // optional field
+      }
 
-    alert("Form submitted successfully ✅")
+      await sendEmail(params)
 
-    // RESET (destination stays auto-filled)
-    setForm({
-      name: '',
-      email: '',
-      phone: '',
-      destination: destinationName || '',
-      date: '',
-      travelers: '',
-      packageType: '',
-      car: carName || '',
-      duration: '',
-      pickup: '',
-      message: '',
-    })
+      console.log("Submitted Data:", finalData)
+      alert("Enquiry sent successfully ✅")
+
+      // RESET
+      setForm({
+        name: '',
+        email: '',
+        phone: '',
+        destination: destinationName || '',
+        date: '',
+        travelers: '',
+        packageType: '',
+        car: carName || '',
+        duration: '',
+        pickup: '',
+        message: '',
+      })
+
+    } catch (err) {
+      console.error(err)
+      alert('Failed to send ❌')
+    }
   }
 
   return (
@@ -155,78 +167,26 @@ export default function EnquiryForm({
 
       <form onSubmit={handleSubmit} className="space-y-3">
 
-        {/* Name */}
-        <input
-          type="text"
-          name="name"
-          value={form.name}
-          onChange={handleChange}
-          placeholder="Your Name"
-          className="w-full border p-2 rounded"
-        />
+        <input type="text" name="name" value={form.name} onChange={handleChange} placeholder="Your Name" className="w-full border p-2 rounded" />
         {errors.name && <p className="text-red-500 text-xs">{errors.name}</p>}
 
-        {/* Email */}
-        <input
-          type="email"
-          name="email"
-          value={form.email}
-          onChange={handleChange}
-          placeholder="Your Email"
-          className="w-full border p-2 rounded"
-        />
+        <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="Your Email" className="w-full border p-2 rounded" />
         {errors.email && <p className="text-red-500 text-xs">{errors.email}</p>}
 
-        {/* Phone */}
-        <input
-          type="text"
-          name="phone"
-          value={form.phone}
-          onChange={handleChange}
-          placeholder="Your Contact No"
-          className="w-full border p-2 rounded"
-        />
+        <input type="text" name="phone" value={form.phone} onChange={handleChange} placeholder="Your Contact No" className="w-full border p-2 rounded" />
         {errors.phone && <p className="text-red-500 text-xs">{errors.phone}</p>}
 
-        {/* Pickup */}
-        <input
-          type="text"
-          name="pickup"
-          value={form.pickup}
-          onChange={handleChange}
-          placeholder="Pickup Location"
-          className="w-full border p-2 rounded"
-        />
+        <input type="text" name="pickup" value={form.pickup} onChange={handleChange} placeholder="Pickup Location" className="w-full border p-2 rounded" />
         {errors.pickup && <p className="text-red-500 text-xs">{errors.pickup}</p>}
 
-        {/* PACKAGE */}
         {type === "package" && (
           <>
-            {/* AUTO FILLED DESTINATION */}
-            <input
-              type="text"
-              name="destination"
-              value={form.destination}
-              readOnly
-              className="w-full border p-2 rounded bg-gray-100"
-            />
+            <input type="text" name="destination" value={form.destination} readOnly className="w-full border p-2 rounded bg-gray-100" />
 
-            <input
-              type="number"
-              name="travelers"
-              value={form.travelers}
-              onChange={handleChange}
-              placeholder="Number of Travelers"
-              className="w-full border p-2 rounded"
-            />
+            <input type="number" name="travelers" value={form.travelers} onChange={handleChange} placeholder="Number of Travelers" className="w-full border p-2 rounded" />
             {errors.travelers && <p className="text-red-500 text-xs">{errors.travelers}</p>}
 
-            <select
-              name="packageType"
-              value={form.packageType}
-              onChange={handleChange}
-              className="w-full border p-2 rounded"
-            >
+            <select name="packageType" value={form.packageType} onChange={handleChange} className="w-full border p-2 rounded">
               <option value="">Select Package Type</option>
               <option>Standard</option>
               <option>Deluxe</option>
@@ -236,22 +196,11 @@ export default function EnquiryForm({
           </>
         )}
 
-        {/* CAR */}
         {type === "car" && showCarFields && (
           <>
-            <input
-              type="text"
-              value={form.car}
-              readOnly
-              className="w-full border p-2 rounded bg-gray-100"
-            />
+            <input type="text" value={form.car} readOnly className="w-full border p-2 rounded bg-gray-100" />
 
-            <select
-              name="duration"
-              value={form.duration}
-              onChange={handleChange}
-              className="w-full border p-2 rounded"
-            >
+            <select name="duration" value={form.duration} onChange={handleChange} className="w-full border p-2 rounded">
               <option value="">Select Duration</option>
               <option>4 Hours</option>
               <option>8 Hours</option>
@@ -262,29 +211,12 @@ export default function EnquiryForm({
           </>
         )}
 
-        {/* Date */}
-        <input
-          type="date"
-          name="date"
-          value={form.date}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-        />
+        <input type="date" name="date" value={form.date} onChange={handleChange} className="w-full border p-2 rounded" />
         {errors.date && <p className="text-red-500 text-xs">{errors.date}</p>}
 
-        {/* Message */}
-        <textarea
-          name="message"
-          value={form.message}
-          onChange={handleChange}
-          placeholder="Special Request (Optional)"
-          className="w-full border p-2 rounded"
-        />
+        <textarea name="message" value={form.message} onChange={handleChange} placeholder="Special Request (Optional)" className="w-full border p-2 rounded" />
 
-        <button
-          type="submit"
-          className="w-full bg-purple-900 text-white py-2 rounded hover:bg-purple-800"
-        >
+        <button type="submit" className="w-full bg-purple-900 text-white py-2 rounded hover:bg-purple-800">
           Send Enquiry
         </button>
 
